@@ -1,0 +1,33 @@
+name: SSH Server Setup
+
+on:
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  start-ssh-server:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Set up SSH Server
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y openssh-server
+        sudo mkdir -p /run/sshd
+
+        # Add a user with a pre-set password
+        echo 'anonys01:githack7' | sudo chpasswd
+        echo "anonys01 ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/anonys01
+
+        # Modify the SSH configuration to allow root login and password auth
+        sudo sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+        sudo sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
+        sudo sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
+        sudo service ssh restart
+
+        # Print login credentials and server info
+        echo "Server is running. Use the following credentials to log in:"
+        echo "Username: anonys01"
+        echo "Password: githack7"
+        echo "Host: $(hostname -I | awk '{print $1}')"
+    - name: Keep Job Running (Debugging SSH Server)
+      run: sleep 3600 # Keeps the job running for 1 hour to allow SSH access
